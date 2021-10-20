@@ -66,9 +66,10 @@ df$grade[ df$age >= 25 & df$age < 35 ]
 # 2) Find ids which has A or A+ as grade
 # Extra: use the `which()` function to find these values instead
 #     which function is handy if you are interested in the index values itself.
+df$id[!is.na(df$age)]
+df$id[c(which(df$grade=="A"),which(df$grade=="A+"))]
 
-
-####
+####n
 # SIMPLE FUNCTIONS
 #
 # Usually we are interested in some characteristics of the dataset
@@ -87,6 +88,9 @@ sum( df$age )
 # One can get rid of the NA if add a further argument to the function:
 sum( df$age , na.rm = TRUE )
 
+sum( df$age[!is.na(df$age)] )
+
+
 # And there are many other functions....
 # calculate the mean
 mean( df$age , na.rm = TRUE )
@@ -100,8 +104,10 @@ sd( df$age , na.rm = TRUE )
 #       for students with grade lower or equal than B+
 #   - what are the issues that you have encountered?
 #   - what are the potential solutions? Name at least two of them!
-
-
+logid=c(which(df$grade=="B"),which(df$grade=="B-"),which(df$grade=="B+"))
+sd( df$age[logid], na.rm = TRUE )
+mean( df$age[logid], na.rm = TRUE )
+?all
 #####
 ## Merging two dataset
 #
@@ -134,14 +140,18 @@ df_lj <- tibble( id = c(1,3,5,10,12),
 df_new2 <- left_join( df_new , df_lj , by = "id" )
 df_new2
 
-
 ##
 # Tasks:
 #
 # 1) Add a new variable to df_new2, and call it `df_new3` which has a variable with name 'year'.
 #     For all students the year is 2002. Use left_join (soon we will cover an easier way to add a simple variable).
 #     Hint: check the `rep()` function. This will help you to avoid writing in '2002' 12 times!
+
 #
+df_lj2 <- tibble( id = c(1,2,3,4,5,6,7,8,9,10,11,12),
+                  year = rep(2002,12))
+df_new3 <- left_join( df_new2 , df_lj2 , by = "id" )
+
 #
 # 2) Create a new datatable `df_new4`, which extends the datatable df_new3 in the following way:
 #   It repeats all the values that are in df_new3 with the following exceptions:
@@ -149,7 +159,14 @@ df_new2
 #     - year is 2012
 #   Hint: use `rbind()` and you can make a shortcut by using the specific variables such as `df_new3$id`, ect.
 
+aux_table <- tibble(id = df_new3$id,
+                    age = df_new3$age+10,
+                    grade = df_new3$grade,
+                    height = df_new3$height,
+                    year = df_new3$year +10,
+                    gender = df_new3$gender)
 
+df_new4 <- rbind(aux_table,df_new3)
 
 
 

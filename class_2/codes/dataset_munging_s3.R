@@ -21,7 +21,7 @@ glimpse( raw_df )
 
 # Add a new variable
 df <- mutate( raw_df , nnights = 1 )
-
+rm(raw_df)
 ###
 # Data cleaning - separating character vector with separator 
 # Check accomotationtype, note typeof is character
@@ -44,7 +44,13 @@ is.factor( df$acc_type )
 ##
 # Task - creating a numeric vector w simple separation
 #   1) Correct the guestreviewrating into simple numeric variable
+df <- separate( df , guestreviewsrating , "/" ,
+                into = c("garbage","guestrev_type") )
+df <- select( df , -garbage )
+
+typeof( df$guestrev_type )
 #   2) check with `typeof()`
+df$ratings <- as.numeric(df$guestrev_type)
 #   3) convert the variable into a numeric variable
 
 
@@ -76,15 +82,14 @@ df <- mutate( df ,
 ###
 ## Rename variables
 # with tidy approach it is recommended to use human-readable vector names as well!
-df <- rename( df , rating_count = rating_reviewcount,
-              ratingta = rating2_ta )
+df <- rename( df ,  ratingta_count = rating2_ta_reviewcount,
+              country = addresscountryname,
+              stars = starrating,
+              city = s_city)
 ##
 # Task:
 #   also rename the following variables as follows:
-#       ratingta_count = rating2_ta_reviewcount,
-#       country = addresscountryname,
-#       stars = starrating,
-#       city = s_city
+       
 
 
 
@@ -102,7 +107,8 @@ df <- filter( df , !is.na( ratings ) )
 ##
 # Task:
 # Do the same for missing id-s and argue what to do with them! 
-
+filter( df , is.na( hotel_id ) )
+df <- filter( df , !is.na( hotel_id ) )
 
 ####
 ## Correcting wrongly documented observations:
@@ -137,7 +143,14 @@ df <- filter( df , !duplicated(
 #       - in date: 2017, November and 0s week (multiple conditions)
 #       - with Hotel types which has stars between 3 and 4
 #       - and drop observations which has price more than 1000 EUR.
-
+hotel_vienna <- filter(df , city == 'Vienna' ,
+                        year == 2017 ,
+                        month == 11 ,
+                        weekend == 0 ,
+                        acc_type == 'Hotel' ,
+                        stars >= 3 ,
+                        stars <= 4 ,
+                        price <1000)
 
 
 ##
@@ -149,6 +162,46 @@ hotel_vienna <- arrange( hotel_vienna , desc( price ) )
 
 
 # Writing out csv as clean data
-data_out <- getwd()
+data_out <- "GitHub/ECBS-5208-Coding-1-Business-Analytics/class_2"
 write_csv( hotel_vienna , paste0( data_out,
                                   "/data/clean/hotel_vienna_restricted.csv"))
+
+
+
+
+#sqldf is an R package for runing SQL statements on R data frames,
+#optimized for convenience. The user simply specifies an SQL statement
+#in R using data frame names in place of table names and a database
+#with appropriate table layouts/schema is automatically created,
+#the data frames are automatically loaded into the database,
+#the specified SQL statement is performed, the result is read back
+#into R and the database is deleted all automatically behind the
+#scenes making the database's existence transparent to the user 
+#who only specifies the SQL statement. Surprisingly this can 
+#at times be even faster than the corresponding pure R calculation
+#(although the purpose of the project is convenience and not speed)
+#SQLite by default but knows MySQL. SQLite, H2, MySQL and PostgreSQL
+#its very good when you know one of the languages of either R or SQL and want to get to know the other better
+
+hotel_vienna
+install.packages('sqldf')
+library("sqldf")
+
+
+
+sqldf("select * from hotel_vienna")
+
+limit5 <- sqldf("select * from hotel_vienna limit 5")
+limit5
+
+sqldf("select count(hotel_id) from hotel_vienna where price<200")
+
+join1 <- sqldf("select rating_count, hotel_id from hotel_vienna")
+
+join2 <- sqldf("select center1distance, hotel_id from hotel_vienna")
+
+joined <- sqldf("select * from join1 inner join join2 using(hotel_id)")
+joined
+
+#you can also insert, nest select, group, use basic functions:avg count
+#you cannot store proc, trigger, event
